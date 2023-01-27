@@ -1,13 +1,10 @@
 from __future__ import print_function
 from __future__ import division
-
 import time
 import argparse
 import numpy as np
-import pickle
 from collections import Counter
-from time import strptime
-import pdb
+
 
 def entropy_spatial(sessions):
     locations = {}
@@ -28,10 +25,6 @@ class DataFoursquare(object):
     def __init__(self, trace_min=10, global_visit=10, hour_gap=72, min_gap=10, session_min=2, session_max=10,
                  sessions_min=5, train_split=0.8, embedding_len=50):
         tmp_path = "../data/"
-        
-        # self.save_name = 'foursquare_nyc_20000'
-        # self.DATASET_PATH='/home/local/ASUAD/ychen404/Code/DeepMove_new/dataset_tsmc2014/'
-        # self.DATASET_NAME='dataset_TSMC2014_NYC_20000.txt'
 
         self.save_name = 'tweets-cikm_20000'
         self.DATASET_PATH='serm-data/'
@@ -66,19 +59,11 @@ class DataFoursquare(object):
     # ############# 1. read trajectory data from twitters
     def load_trajectory_from_tweets(self):
         with open(self.DATASET_PATH + self.DATASET_NAME) as fid:
-        # with open(self.TWITTER_PATH, 'r') as fid:
+
             for i, line in enumerate(fid):
                 _, uid, _, _, tim, _, _, tweet, pid = line.strip('\r\n').split('')
-                # print("pid:{}".format(pid))
-                
-                ########## Match the fields in Foursquare NYC dataset ##########
-                # uid, pid, _, _, _, _, _, tim_orig = line.strip('\r\n').split('\t')
 
-                ########## Convert character month to number to match with the clean_tweets_sample.txt ########## 
-                # day, mon, date, time, zero, year = tim_orig.strip('\r\n').split(' ')
-                # mon_num = str(strptime(mon, '%b').tm_mon)
-                # tim = (year + '-' + mon_num + '-' + date + ' ' + time)
-                
+
                 if uid not in self.data:
                     self.data[uid] = [[pid, tim]]
                 else:
@@ -87,21 +72,11 @@ class DataFoursquare(object):
                     self.venues[pid] = 1
                 else:
                     self.venues[pid] += 1
-        # print("The length of uid is: {}".format(len(self.data[uid])))
-        # print("Count: {}".format(Counter(self.data)))
+
         cnt = len(self.data.keys())
         # pdb.set_trace()
 
-        print(self.data.keys())        
-
-        print("Printing the time of uid 14324035")
-        for x in self.data['14324035']:
-            print(x[1])
-       
-        print("Printing the time of uid 14604426")
-        for x in self.data['14604426']:
-            print(x[1])
-
+        print(self.data.keys())
         print("Number of unique UID in the dataset: {}".format(cnt))
 
 
@@ -198,15 +173,11 @@ class DataFoursquare(object):
 
     # support for radius of gyration
     def load_venues(self):
-        # with open(self.TWITTER_PATH, 'r') as fid:
+
         with open(self.DATASET_PATH + self.DATASET_NAME, 'r') as fid:
             for line in fid:
                 _, uid, lon, lat, tim, _, _, tweet, pid = line.strip('\r\n').split('')
-                # uid, pid, _, _, lat, lon, _, tim_orig = line.strip('\r\n').split('\t')
-                
-                # day, mon, date, time, zero, year = tim_orig.strip('\r\n').split(' ')
-                # mon_num = str(strptime(mon, '%b').tm_mon)
-                # tim = (year + '-' + mon_num + '-' + date + ' ' + time)
+
                 self.pid_loc_lat[pid] = [float(lon), float(lat)]
 
     def venues_lookup(self):
@@ -244,9 +215,7 @@ class DataFoursquare(object):
             train_id = sessions_id[:split_id]
             test_id = sessions_id[split_id:]
             pred_len = sum([len(sessions_tran[i]) - 1 for i in train_id])
-            # print("pred_len: {}".format(pred_len))
             valid_len = sum([len(sessions_tran[i]) - 1 for i in test_id])
-            # print("valid_len: {}".format(valid_len))
             train_loc = {}
             for i in train_id:
                 for sess in sessions_tran[i]:

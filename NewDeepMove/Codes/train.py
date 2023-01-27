@@ -5,10 +5,8 @@ import pickle as pickle
 import time
 from collections import deque, Counter
 from json import encoder
-
 import numpy as np
 import torch
-
 encoder.FLOAT_REPR = lambda o: format(o, '.3f')
 from torch.autograd import Variable
 from statistics import mean
@@ -52,7 +50,6 @@ class RnnParameterData(object):
 
 def generate_input_history(data_neural, mode, mode2=None, candidate=None):
     data_train = {}
-
     train_idx = {}
     if candidate is None:
         candidate = data_neural.keys()
@@ -215,8 +212,7 @@ def generate_input_long_history(data_neural, mode, candidate=None):
 
 
 def generate_queue(train_idx, mode, mode2):
-    """return a deque. You must use it by train_queue.popleft()"""
-    # Need to convert dict_keys to list in Python3
+
     user = list(train_idx.keys())
     print('len of users in queue :{}'.format(len(user)))
     train_queue = deque()
@@ -262,8 +258,6 @@ def get_acc(target, scores):
 
 
 def run_simple(data, run_idx, mode, lr, clip, model, optimizer, criterion, mode2=None):
-    """mode=train: return model, avg_loss
-       mode=test: return avg_loss,avg_acc,users_rnn_acc"""
     run_queue = None
     if mode == 'train':
         model.train(True)

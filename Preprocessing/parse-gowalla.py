@@ -29,14 +29,11 @@ class DataFoursquare(object):
     def __init__(self, trace_min=10, global_visit=10, hour_gap=72, min_gap=10, session_min=5, session_max=10,
                      sessions_min=5, train_split=0.8, embedding_len=50):
         tmp_path = "./data/"
-        self.TWITTER_PATH = './Dataset_gowalla/Gowalla_totalCheckins.txt'
-        # self.TWITTER_PATH ='Dataset_gowalla/gowalla_nyc.txt'
 
-        # self.VENUES_PATH = tmp_path + 'foursquare/venues_all.txt'
+        self.TWITTER_PATH ='Dataset_gowalla/gowalla_nyc.txt'
+
         self.SAVE_PATH = tmp_path
-        self.save_name = 'gowalla'
-        # self.save_name = 'gowalla_nyc'
-
+        self.save_name = 'gowalla_nyc'
         self.trace_len_min = trace_min
         self.location_global_visit_min = global_visit
         self.hour_gap = hour_gap
@@ -79,9 +76,7 @@ class DataFoursquare(object):
 
     # ########### 2.0 basically filter users based on visit length and other statistics
     def filter_users_by_length(self):
-        """
-        [ expression for item in list if conditional ]
-        """
+
         # filter out the uids with a number of visits that is larger than trace_len_min
         uid_filtered = [x for x in self.data if len(self.data[x]) > self.trace_len_min]
         print("Number of UID with longer than 10 visits: {}".format(len(uid_filtered)))
@@ -136,9 +131,7 @@ class DataFoursquare(object):
                     sessions[sid] = [pid_n_time_enu]
                 else:
                     
-                    # convert differnce in minutes to hours and then filter records that
-                    # have more interval than the threshold gaps
-                    #take differnce between each subsequnt records
+
                     if (tid - last_tid) / 3600 > self.hour_gap or len(sessions[sid - 1]) > self.session_max:
                         sessions[sid] = [pid_n_time_enu]
                     elif (tid - last_tid) / 60 > self.min_gap:

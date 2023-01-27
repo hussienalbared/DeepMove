@@ -2,32 +2,16 @@ from __future__ import print_function
 from __future__ import division
 
 import time
-import argparse
 import numpy as np
 import pickle
 from collections import Counter
 from time import strptime
-
 import argparse
 import random
 import os
-
-
-FILE = '../dataset_tsmc2014/dataset_TSMC2014_NYC_20000.txt'
-# OUTPUT = '../dataset_tsmc2014/dataset_TSMC2014_NYC_20000_top100.txt'
-
-
 NUM_WORKERS = 2
 random.seed(10)
 worker_bin = [[] for i in range(NUM_WORKERS)]
-
-# Use the first 100 users as public 
-public_uid = []
-private_uid = []
-
-
-
-OUTPUT = '../dataset_tsmc2014/foursquare_nyc_20000_filtered.txt'
 
 def entropy_spatial(sessions):
     locations = {}
@@ -50,19 +34,10 @@ class DataFoursquare(object):
                  sessions_min=5, train_split=0.8, embedding_len=50, save_name='foursquare_nyc'):
         tmp_path = "./data/"
         print('save_name :{}'.format(save_name))
-        
-        # self.TWITTER_PATH = tmp_path + 'foursquare/tweets_clean.txt'
-        # self.TWITTER_PATH = tmp_path + 'tweets_clean_sample.txt'
-        # self.TWITTER_PATH = '/home/local/ASUAD/ychen404/Code/DeepMove_new/dataset_tsmc2014/dataset_TSMC2014_NYC_simple.txt'
-        # self.VENUES_PATH = tmp_path + 'foursquare/venues_all.txt'       
         self.SAVE_PATH = tmp_path
         self.save_name = save_name
         self.DATASET_PATH='./dataset_tsmc2014/'
         self.DATASET_NAME='dataset_TSMC2014_NYC.txt'
-
-       
-
-
         self.trace_len_min = trace_min
         self.location_global_visit_min = global_visit
         self.hour_gap = hour_gap
@@ -71,9 +46,7 @@ class DataFoursquare(object):
         self.filter_short_session = session_min
         self.sessions_count_min = sessions_min
         self.words_embeddings_len = embedding_len
-
         self.train_split = train_split
-
         self.data = {}
         self.venues = {}
         self.words_original = []
@@ -94,21 +67,11 @@ class DataFoursquare(object):
         with open(self.DATASET_PATH + self.DATASET_NAME,encoding='latin-1') as fid:
         # with open(self.TWITTER_PATH, 'r') as fid:
             for i, line in enumerate(fid):
-                # _, uid, _, _, tim, _, _, tweet, pid = line.strip('\r\n').split('')
-                # print("pid:{}".format(pid))
-                
-                ########## Match the fields in Foursquare NYC dataset ##########
-                # print(i)
-                # if i % 1000 == 0:
-                #     print(i, line)
-
                 uid, pid, _, _, _, _, _, tim_orig = line.strip('\r\n').split('\t')
-
                 ########## Convert character month to number to match with the clean_tweets_sample.txt ########## 
                 day, mon, date, time, zero, year = tim_orig.strip('\r\n').split(' ')
                 mon_num = str(strptime(mon, '%b').tm_mon)
                 tim = (year + '-' + mon_num + '-' + date + ' ' + time)
-                
                 if uid not in self.data:
                     self.data[uid] = [[pid, tim]]
                 else:
@@ -120,51 +83,15 @@ class DataFoursquare(object):
 
     # ########### 3.0 basically filter users based on visit length and other statistics
     def filter_users_by_length(self):
-        """
-        [ expression for item in list if conditional ]
-        """
-        
-        # for x in self.data:
-        #     print("X before: {}".format(x))
-        #     print("x len: {}".format(len(self.data[x])))
-        #     print(bool(len(self.data[x]) > self.trace_len_min))
-        #     print(x[1])
-        
         # filter out the uids with a number of visits that is larger than trace_len_min 
         uid_3 = [x for x in self.data if len(self.data[x]) > self.trace_len_min]
-        # print((len(self.data['344'])))
-        # print("uid_3: {}".format(uid_3))
-        # print("x: {}".format(x))
-        # print("self.data[x]: {}".format(self.data[x]))
-        # print("self.trace_len_min: {}".format(self.trace_len_min))
-        # print("uid_3: {}".format(uid_3))
-        
-        # print(len(self.data['344']))
-        # print([(x, len(self.data[x])) for x in uid_3])
-        
         # Pack the uid and the number of visits together and sorted by the number of visits
         pick3 = sorted([(x, len(self.data[x])) for x in uid_3], key=lambda x: x[1], reverse=True)
         pid_3 = [x for x in self.venues if self.venues[x] > self.location_global_visit_min]
-        
-        # for x in self.venues:
-        #     if self.venues[x] > self.location_global_visit_min:
-        #         print(x)
-
-        # print(pid_3)
-        
-        # print("location_global_visit_min: {}".format(self.location_global_visit_min))
-        
         pid_pic3 = sorted([(x, self.venues[x]) for x in pid_3], key=lambda x: x[1], reverse=True)
-        
         pid_3 = dict(pid_pic3)
-        # for k in pid_3:
-        #     print(k)
-        # print(pid_3.keys())
-
-        # print("ff")
         session_len_list = []
-        # for u in pick3:
-        #     print(u)
+
 
         for u in pick3:
             uid = u[0]
@@ -174,21 +101,16 @@ class DataFoursquare(object):
             topk = Counter([x[0] for x in info]).most_common()
             # topk1 is the locations visited more than once
             topk1 = [x[0] for x in topk if x[1] > 1]
-            
             sessions = {}
             for i, record in enumerate(info):
                 poi, tmd = record
-                # print("poi: {}".format(poi))
-                # print("tmd: {}".format(tmd))
                 try:
                     # mktime: convert time the seconds since epoch in local time
                     tid = int(time.mktime(time.strptime(tmd, "%Y-%m-%d %H:%M:%S")))
-                    # print("tid: {}".format(tid))
                 except Exception as e:
                     print('error:{}'.format(e))
                     continue
                 sid = len(sessions)
-                # print("sid: {}".format(sid))
                 if poi not in pid_3 and poi not in topk1:
                     # if poi not in topk1:
                     continue
@@ -233,10 +155,8 @@ class DataFoursquare(object):
 
     # support for radius of gyration
     def load_venues(self):
-        # with open(self.TWITTER_PATH, 'r') as fid:
         with open(self.DATASET_PATH + self.DATASET_NAME, 'r',encoding='latin-1') as fid:
             for line in fid:
-                # _, uid, lon, lat, tim, _, _, tweet, pid = line.strip('\r\n').split('')
                 uid, pid, _, _, lat, lon, _, tim_orig = line.strip('\r\n').split('\t')
                 
                 day, mon, date, time, zero, year = tim_orig.strip('\r\n').split(' ')
@@ -279,9 +199,7 @@ class DataFoursquare(object):
             train_id = sessions_id[:split_id]
             test_id = sessions_id[split_id:]
             pred_len = sum([len(sessions_tran[i]) - 1 for i in train_id])
-            # print("pred_len: {}".format(pred_len))
             valid_len = sum([len(sessions_tran[i]) - 1 for i in test_id])
-            # print("valid_len: {}".format(valid_len))
             train_loc = {}
             for i in train_id:
                 for sess in sessions_tran[i]:
@@ -291,7 +209,6 @@ class DataFoursquare(object):
                         train_loc[sess[0]] = 1
             # calculate entropy
             entropy = entropy_spatial(sessions)
-
             # calculate location ratio
             train_location = []
             for i in train_id:
@@ -326,7 +243,6 @@ class DataFoursquare(object):
     # ############# 6. save variables
     def get_parameters(self):
         parameters = {}
-        # parameters['TWITTER_PATH'] = self.TWITTER_PATH
         parameters['SAVE_PATH'] = self.SAVE_PATH
         parameters['trace_len_min'] = self.trace_len_min
         parameters['location_global_visit_min'] = self.location_global_visit_min
@@ -360,8 +276,7 @@ def parse_args():
     parser.add_argument('--sessions_min', type=int, default=5, help="the minimum amount of the good user's sessions")
     parser.add_argument('--train_split', type=float, default=0.8, help="train/test ratio")
     parser.add_argument('--save_name', type=str, default='foursquare_nyc', help="the file name for the pk")
-# dataset_TSMC2014_NYC_20000
-# foursquare_nyc
+
     return parser.parse_args()
 
 

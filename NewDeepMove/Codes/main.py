@@ -1,12 +1,10 @@
 import json
 import os
 import random
-
-import easydict as easydict
 import numpy as np
 import torch
 import time
-
+import argparse
 from torch import nn, optim
 
 from NewDeepMove.Codes.model import TrajPreSimple, TrajPreAttnAvgLongUser, TrajPreLocalAttnLong
@@ -60,8 +58,6 @@ def run(args):
     metrics = {'train_loss': [], 'valid_loss': [], 'accuracy': [],'accuracy5': [],'accuracy10': [], 'valid_acc': {}}
    
     candidate = parameters.data_neural.keys()
-    candidate=random.sample(candidate, 700)
-
     if 'long' in parameters.model_mode:
         long_history = True
     else:
@@ -98,8 +94,6 @@ def run(args):
             print('==>Train Epoch:{:0>2d} Loss:{:.4f}'.format(epoch, avg_loss))
             metrics['train_loss'].append(avg_loss)
 
-        # avg_loss, avg_acc, users_acc = run_simple(data_test, test_idx, 'test', lr, parameters.clip, model,
-        #                                           optimizer, criterion, parameters.model_mode)
         avg_loss, (avg_acc_1,avg_acc_5,avg_acc_10), users_acc=run_simple(data_test, test_idx, 'test', lr, parameters.clip, model,
                                                   optimizer, criterion, parameters.model_mode)
         print('==>Test Acc1:{},Test Acc5:{},Test Acc10:{} Loss:{:.4f}'.format(avg_acc_1,avg_acc_5,avg_acc_10, avg_loss))
@@ -109,11 +103,8 @@ def run(args):
         metrics['accuracy5'].append(avg_acc_5)
         metrics['accuracy10'].append(avg_acc_10)
         metrics['valid_acc'][epoch] = users_acc
-
         save_name_tmp = 'ep_' + str(epoch) + '.pt'
         torch.save(model.state_dict(), SAVE_PATH + tmp_path + save_name_tmp)
-
-        
         lr_last = lr
         lr = optimizer.param_groups[0]['lr']
         if lr_last > lr:
@@ -190,32 +181,30 @@ class Settings(object):
 if __name__ == '__main__':
     np.random.seed(1)
     torch.manual_seed(1)
-#     os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"    
-    args= easydict.EasyDict({
-    "loc_emb_size"  :50,
-    "uid_emb_size":  20,
-    "voc_emb_size":50,
-    "tim_emb_size":10,
-    "hidden_size":80,
-    "dropout_p" :0.5,
-    "data_name":"foursquare_nyc",
-    "learning_rate":0.002,
-    "lr_step":1.0,
-    "lr_decay":0.1,
-    "optim":"Adam",
-    "L2" :1 * 1e-6, 
-    "clip" :1.0,
-    "epoch_max":10,
-    "history_mode":"avg",
-    "rnn_type":"GRU", 
-    "attn_type":"dot",
-    "data_path":"../input/foursquare-nyc/",
-    "save_path":"../output/kaggle/working/",
-    "model_mode":"attn_local_long",
-    "accuracy_mode":"top1",
-    "pretrain":0})
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--loc_emb_size', type=int, default=50, help="location embeddings size")
+    parser.add_argument('--uid_emb_size', type=int, default=20, help="user id embeddings size")
+    parser.add_argument('--voc_emb_size', type=int, default=50, help="words embeddings size")
+    parser.add_argument('--tim_emb_size', type=int, default=10, help="time embeddings size")
+    parser.add_argument('--hidden_size', type=int, default=80)
+    parser.add_argument('--dropout_p', type=float, default=0.5)
+    parser.add_argument('--data_name', type=str, default='foursquare_nyc')
+    parser.add_argument('--learning_rate', type=float, default=0.002)
+    parser.add_argument('--lr_step', type=int, default=1)
+    parser.add_argument('--lr_decay', type=float, default=0.1)
+    parser.add_argument('--optim', type=str, default='Adam', choices=['Adam', 'SGD'])
+    parser.add_argument('--L2', type=float, default=1 * 1e-6, help=" weight decay (L2 penalty)")
+    parser.add_argument('--clip', type=float, default=1)
+    parser.add_argument('--epoch_max', type=int, default=15)
+    parser.add_argument('--history_mode', type=str, default='avg', choices=['max', 'avg', 'whole'])
+    parser.add_argument('--rnn_type', type=str, default='GRU')
+    parser.add_argument('--attn_type', type=str, default='dot', choices=['general', 'concat', 'dot'])
+    parser.add_argument('--data_path', type=str, default='../../data/')
+    parser.add_argument('--save_path', type=str, default='../../results')
+    parser.add_argument('--model_mode', type=str, default='attn_local_long',
+                        choices=['simple', 'simple_long', 'attn_avg_long_user', 'attn_local_long'])
+    parser.add_argument('--pretrain', type=int, default=0)
+    args = parser.parse_args()
     print(args)
-    if args.pretrain == 1:
-        args = load_pretrained_model(args)
-
     ours_acc = run(args)

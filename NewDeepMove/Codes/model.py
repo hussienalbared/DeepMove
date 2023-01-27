@@ -22,7 +22,6 @@ class TrajPreSimple(nn.Module):
         self.dropout = nn.Dropout(p=parameters.dropout_p)
 
     def forward(self, loc, tim):
-
         loc_emb = self.emb_loc(loc)
         tim_emb = self.emb_tim(tim)
         x = torch.cat((loc_emb, tim_emb), 2)
@@ -31,7 +30,6 @@ class TrajPreSimple(nn.Module):
         out = out.squeeze(1)
         out = F.selu(out)
         out = self.dropout(out)
-
         y = self.fc(out)
         score = F.log_softmax(y)  # calculate loss by NLLoss
         return score
@@ -44,10 +42,8 @@ class Attn(nn.Module):
 
     def __init__(self, method, hidden_size):
         super(Attn, self).__init__()
-
         self.method = method
         self.hidden_size = hidden_size
-
         if self.method == 'general':
             self.attn = nn.Linear(self.hidden_size, self.hidden_size)
         elif self.method == 'concat':
@@ -95,17 +91,11 @@ class TrajPreAttnAvgLongUser(nn.Module):
         self.rnn = nn.GRU( input_size,self.hidden_size, 1,bidirectional=True)
         self.fc_final = nn.Linear(2*2 * self.hidden_size + self.uid_emb_size, self.loc_size)
         self.dropout = nn.Dropout(p=parameters.dropout_p)
-        
-
-    
     def forward(self, loc, tim, history_loc, history_tim, history_count, uid, target_len):
-       
-
         loc_emb = self.emb_loc(loc)
         tim_emb = self.emb_tim(tim)
         x = torch.cat((loc_emb, tim_emb), 2)
         x = self.dropout(x)
-
         loc_emb_history = self.emb_loc(history_loc).squeeze(1)
         tim_emb_history = self.emb_tim(history_tim).squeeze(1)
         count = 0
@@ -134,7 +124,6 @@ class TrajPreAttnAvgLongUser(nn.Module):
         out = self.dropout(out)
         y = self.fc_final(out)
         score = F.log_softmax(y)
-
         return score
 
 
@@ -165,8 +154,6 @@ class TrajPreLocalAttnLong(nn.Module):
 
   
     def forward(self, loc, tim, target_len):
-       
-
         loc_emb = self.emb_loc(loc)
         tim_emb = self.emb_tim(tim)
         x = torch.cat((loc_emb, tim_emb), 2)
@@ -179,9 +166,7 @@ class TrajPreLocalAttnLong(nn.Module):
         context = attn_weights.bmm(hidden_history.unsqueeze(0)).squeeze(0)
         out = torch.cat((hidden_state, context), 1)  # no need for fc_attn
         out = self.dropout(out)
-
         y = self.fc_final(out)
         score = F.log_softmax(y)
-
         return score
 

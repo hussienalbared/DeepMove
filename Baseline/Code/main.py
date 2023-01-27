@@ -5,8 +5,6 @@ from __future__ import division
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import random
-
 import os
 import json
 import time
@@ -16,7 +14,7 @@ from json import encoder
 
 encoder.FLOAT_REPR = lambda o: format(o, '.3f')
 
-from train import run_simple, RnnParameterData, generate_input_history, markov, \
+from train import run_simple, RnnParameterData, generate_input_history, \
     generate_input_long_history, generate_input_long_history2
 from model import TrajPreSimple, TrajPreAttnAvgLongUser, TrajPreLocalAttnLong
 
@@ -217,8 +215,8 @@ if __name__ == '__main__':
     parser.add_argument('--history_mode', type=str, default='avg', choices=['max', 'avg', 'whole'])
     parser.add_argument('--rnn_type', type=str, default='GRU', choices=['LSTM', 'GRU', 'RNN'])
     parser.add_argument('--attn_type', type=str, default='dot', choices=['general', 'concat', 'dot'])
-    parser.add_argument('--data_path', type=str, default='./data/')
-    parser.add_argument('--save_path', type=str, default='./results/')
+    parser.add_argument('--data_path', type=str, default='../../data/')
+    parser.add_argument('--save_path', type=str, default='../../results')
     parser.add_argument('--model_mode', type=str, default='attn_local_long',
                         choices=['simple', 'simple_long', 'attn_avg_long_user', 'attn_local_long'])
     parser.add_argument('--pretrain', type=int, default=0)
@@ -226,5 +224,4 @@ if __name__ == '__main__':
     print(args)
     if args.pretrain == 1:
         args = load_pretrained_model(args)
-
     ours_acc = run(args)
